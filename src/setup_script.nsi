@@ -17,11 +17,13 @@ Unicode true
 !insertmacro GetOptions
 
 ; Defines
-!define APP_AUTHOR "Henry++"
-!define APP_WEBSITE "https://github.com/henrypp"
 
-!define COPYRIGHT "(c) ${APP_AUTHOR}. All rights reversed."
-!define LICENSE_FILE "${APP_FILES_DIR}\64\License.txt"
+!define APP_AUTHOR         "Henry++"
+!define APP_WEBSITE        "https://github.com/henrypp"
+!define /date CURRENT_YEAR "%Y"
+
+!define COPYRIGHT          "(c) ${CURRENT_YEAR} ${APP_AUTHOR}"
+!define LICENSE_FILE       "${APP_FILES_DIR}\64\License.txt"
 
 !define MUI_ABORTWARNING
 !define MUI_FINISHPAGE_NOAUTOCLOSE
@@ -35,7 +37,7 @@ Unicode true
 !define MUI_FINISHPAGE_RUN_FUNCTION RunApplication
 
 !define MUI_FINISHPAGE_SHOWREADME
-!define MUI_FINISHPAGE_SHOWREADME_TEXT "Show release notes"
+!define MUI_FINISHPAGE_SHOWREADME_TEXT "$(ShowReleaseNote)"
 !define MUI_FINISHPAGE_SHOWREADME_FUNCTION ShowReleaseNotes
 !define MUI_FINISHPAGE_SHOWREADME_NOTCHECKED
 
@@ -54,41 +56,9 @@ Unicode true
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
 
-LicenseLangString MUILicense ${LANG_ENGLISH} "${LICENSE_FILE}"
+LicenseLangString MUILicense 1033 "${LICENSE_FILE}"
 
-; Language files
-!insertmacro MUI_LANGUAGE "Arabic"
-!insertmacro MUI_LANGUAGE "Albanian"
-!insertmacro MUI_LANGUAGE "Belarusian"
-!insertmacro MUI_LANGUAGE "Catalan"
-!insertmacro MUI_LANGUAGE "Croatian"
-!insertmacro MUI_LANGUAGE "Czech"
-!insertmacro MUI_LANGUAGE "Danish"
-!insertmacro MUI_LANGUAGE "Dutch"
-!insertmacro MUI_LANGUAGE "English"
-!insertmacro MUI_LANGUAGE "Farsi"
-!insertmacro MUI_LANGUAGE "French"
-!insertmacro MUI_LANGUAGE "German"
-!insertmacro MUI_LANGUAGE "Greek"
-!insertmacro MUI_LANGUAGE "Korean"
-!insertmacro MUI_LANGUAGE "Hungarian"
-!insertmacro MUI_LANGUAGE "Indonesian"
-!insertmacro MUI_LANGUAGE "Italian"
-!insertmacro MUI_LANGUAGE "Japanese"
-!insertmacro MUI_LANGUAGE "Lithuanian"
-!insertmacro MUI_LANGUAGE "Polish"
-!insertmacro MUI_LANGUAGE "Portuguese"
-!insertmacro MUI_LANGUAGE "PortugueseBR"
-!insertmacro MUI_LANGUAGE "Romanian"
-!insertmacro MUI_LANGUAGE "Russian"
-!insertmacro MUI_LANGUAGE "SimpChinese"
-!insertmacro MUI_LANGUAGE "Spanish"
-!insertmacro MUI_LANGUAGE "Swedish"
-!insertmacro MUI_LANGUAGE "Thai"
-!insertmacro MUI_LANGUAGE "TradChinese"
-!insertmacro MUI_LANGUAGE "Turkish"
-!insertmacro MUI_LANGUAGE "Ukrainian"
-!insertmacro MUI_RESERVEFILE_LANGDLL
+!include setup_script_languages.nsi
 
 ; Options
 AllowSkipFiles off
@@ -105,7 +75,7 @@ XPStyle on
 Name "${APP_NAME}"
 BrandingText "${COPYRIGHT}"
 
-Caption "${APP_NAME} v${APP_VERSION}"
+Caption "${APP_NAME} ${APP_VERSION}"
 UninstallCaption "${APP_NAME}"
 
 Icon "${NSISDIR}\Contrib\Graphics\Icons\orange-install-nsis.ico"
@@ -220,7 +190,7 @@ Function .onInit
 	${IfNot} ${AtLeastWin7}
 		IfSilent skip
 
-		MessageBox MB_OK|MB_ICONEXCLAMATION '${APP_NAME} requires Windows 7 and later!'
+		MessageBox MB_OK|MB_ICONEXCLAMATION '$(RequireWindows7)'
 
 		skip:
 		Abort
@@ -234,7 +204,7 @@ Function un.onInit
 
 	IfSilent skip
 
-	MessageBox MB_YESNO|MB_ICONEXCLAMATION|MB_DEFBUTTON2 'Are you sure you want to uninstall ${APP_NAME}?' IDYES skip ; MUI_UNTEXT_CONFIRM_SUBTITLE
+	MessageBox MB_YESNO|MB_ICONEXCLAMATION|MB_DEFBUTTON2 '$(AppUninstall)' IDYES skip ; MUI_UNTEXT_CONFIRM_SUBTITLE
 	Abort
 
 	skip:
@@ -243,17 +213,17 @@ FunctionEnd
 Function un.onUninstSuccess
 	IfSilent skip
 
-	MessageBox MB_OK|MB_ICONINFORMATION '${APP_NAME} was completely removed!'
+	MessageBox MB_OK|MB_ICONINFORMATION '$(AppRemoved)'
 
 	skip:
 FunctionEnd
 
-Section "!${APP_NAME}"
+Section "!$(CoreFiles)"
 	SectionIn RO
 
 	SetOutPath $INSTDIR
 
-	DetailPrint "Close running instances..."
+	DetailPrint "$(CloseRunningInstances)"
 
 	${CloseInstances}
 
@@ -269,6 +239,10 @@ Section "!${APP_NAME}"
 	File "${APP_FILES_DIR}\64\License.txt"
 	File "${APP_FILES_DIR}\64\Readme.txt"
 
+	${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
+	IntFmt $0 "0x%08X" $0
+	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME_SHORT}" "EstimatedSize" "$0"
+
 	WriteUninstaller $INSTDIR\uninstall.exe
 
 	; Create uninstall entry
@@ -283,15 +257,16 @@ Section "!${APP_NAME}"
 	Call RunApplication
 
 	Pop $R0
+
 SectionEnd
 
-Section "Localization"
+Section "$(Localization)"
 	SetOutPath $INSTDIR
 
 	File /nonfatal "${APP_FILES_DIR}\64\${APP_NAME_SHORT}.lng"
 SectionEnd
 
-Section "Create desktop shortcut" SecShortcut1
+Section "$(CreateDesktopShortcut)" SecShortcut1
 	IfSilent skip
 
 	CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME_SHORT}.exe"
@@ -299,21 +274,21 @@ Section "Create desktop shortcut" SecShortcut1
 	skip:
 SectionEnd
 
-Section "Create start menu shortcuts" SecShortcut2
+Section "$(CreateStartMenuShortcut)" SecShortcut2
 	IfSilent skip
 
 	CreateDirectory "$SMPROGRAMS\${APP_NAME}"
 
 	CreateShortCut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME_SHORT}.exe"
-	CreateShortCut "$SMPROGRAMS\${APP_NAME}\License.lnk" "$INSTDIR\License.txt"
-	CreateShortCut "$SMPROGRAMS\${APP_NAME}\History.lnk" "$INSTDIR\History.txt"
-	CreateShortCut "$SMPROGRAMS\${APP_NAME}\Readme.lnk" "$INSTDIR\Readme.txt"
-	CreateShortCut "$SMPROGRAMS\${APP_NAME}\Uninstall.lnk" "$INSTDIR\uninstall.exe"
+	CreateShortCut "$SMPROGRAMS\${APP_NAME}\$(ShortcutLicense).lnk" "$INSTDIR\License.txt"
+	CreateShortCut "$SMPROGRAMS\${APP_NAME}\$(ShortcutHistory).lnk" "$INSTDIR\History.txt"
+	CreateShortCut "$SMPROGRAMS\${APP_NAME}\$(ShortcutReadme).lnk" "$INSTDIR\Readme.txt"
+	CreateShortCut "$SMPROGRAMS\${APP_NAME}\$(ShortcutUninstall).lnk" "$INSTDIR\uninstall.exe"
 
 	skip:
 SectionEnd
 
-Section /o "Store settings in application directory (portable mode)" SecPortable
+Section /o "$(StoreSettingsApplicationDir)" SecPortable
 	IfFileExists "$INSTDIR\portable.dat" portable
 	IfFileExists "$INSTDIR\${APP_NAME_SHORT}.ini" portable not_portable
 
@@ -334,7 +309,7 @@ SectionEnd
 Section "Uninstall"
 	IfFileExists $INSTDIR\${APP_NAME_SHORT}.exe installed
 
-	MessageBox MB_YESNO "It does not appear that ${APP_NAME} is installed in the installation directory.$\r$\nContinue anyway (not recommended)?" IDYES installed
+	MessageBox MB_YESNO "$(AppFolderNotCheck)" IDYES installed
 	Abort
 
 	installed:
@@ -457,13 +432,13 @@ Function IsPortable
 FunctionEnd
 
 ; Version info
-VIAddVersionKey "Comments" "${APP_WEBSITE}"
-VIAddVersionKey "CompanyName" "${APP_AUTHOR}"
-VIAddVersionKey "FileDescription" "${APP_NAME}"
-VIAddVersionKey "FileVersion" "${APP_VERSION}"
-VIAddVersionKey "InternalName" "${APP_NAME_SHORT}"
-VIAddVersionKey "LegalCopyright" "${COPYRIGHT}"
+VIAddVersionKey "Comments"         "${APP_WEBSITE}"
+VIAddVersionKey "CompanyName"      "${APP_AUTHOR}"
+VIAddVersionKey "FileDescription"  "${APP_NAME} installer"
+VIAddVersionKey "FileVersion"      "${APP_VERSION}"
+VIAddVersionKey "InternalName"     "${APP_NAME_SHORT}"
+VIAddVersionKey "LegalCopyright"   "${COPYRIGHT}"
 VIAddVersionKey "OriginalFilename" "${APP_NAME_SHORT}-${APP_VERSION}-setup.exe"
-VIAddVersionKey "ProductName" "${APP_NAME}"
-VIAddVersionKey "ProductVersion" "${APP_VERSION}"
+VIAddVersionKey "ProductName"      "${APP_NAME}"
+VIAddVersionKey "ProductVersion"   "${APP_VERSION}"
 VIProductVersion "${APP_VERSION}.0.0"
