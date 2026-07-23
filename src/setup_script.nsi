@@ -17,12 +17,11 @@ Unicode true
 !insertmacro GetOptions
 
 ; Defines
-
 !define APP_AUTHOR         "Henry++"
 !define APP_WEBSITE        "https://github.com/henrypp"
 !define /date CURRENT_YEAR "%Y"
 
-!define COPYRIGHT          "(c) ${CURRENT_YEAR} ${APP_AUTHOR}"
+!define COPYRIGHT          "(c) ${CURRENT_YEAR} ${APP_AUTHOR}. All Rights Reversed."
 !define LICENSE_FILE       "${APP_FILES_DIR}\64\License.txt"
 
 !define MUI_ABORTWARNING
@@ -82,7 +81,7 @@ Icon "${NSISDIR}\Contrib\Graphics\Icons\orange-install-nsis.ico"
 UninstallIcon "${NSISDIR}\Contrib\Graphics\Icons\orange-uninstall-nsis.ico"
 
 InstallDir "$PROGRAMFILES64\${APP_NAME}"
-InstallDirRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME_SHORT}" "InstallLocation"
+InstallDirRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME_SHORT}" "InstallLocation"
 
 RequestExecutionLevel admin
 
